@@ -3,7 +3,7 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const { getSheetData, updateSheetData } = require('./google');
 
-const SHEET_ID = '2014942728'; // Replace with your actual Google Sheet ID
+const SHEET_ID = '1OyO21oZYswLa2tiuI4EfbYCAVxcOzr17RgQeQZkglzQ'; // Replace with your actual Google Sheet ID
 const RANGE = 'Sheet1!A2:A'; // Adjust if you're using a different sheet or layout
 
 // Check stock status by parsing quantity section
