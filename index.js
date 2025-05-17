@@ -1,53 +1,66 @@
-require("dotenv").config();
-const puppeteer = require("puppeteer");
-const { GoogleAuth } = require("google-auth-library");
-const { getSheetData, updateSheetData } = require("./google");
-const fs = require('fs');
+require('dotenv').config();
+const axios = require('axios');
+const cheerio = require('cheerio');
+const { getSheetData, updateSheetData } = require('./google');
 
-if (process.env.GOOGLE_SERVICE_JSON) {
-  fs.writeFileSync('service-account.json', process.env.GOOGLE_SERVICE_JSON);
+const SHEET_ID = '2014942728'; // Replace with your actual Google Sheet ID
+const RANGE = 'Sheet1!A2:A'; // Adjust if you're using a different sheet or layout
+
+// Check stock status by parsing quantity section
+async function checkShopeeStock(url) {
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0',
+      },
+    });
+
+    const html = response.data;
+    const $ = cheerio.load(html);
+
+    // Find section containing "pieces available"
+    const text = $('section:contains("Quantity")').text();
+
+    if (text.includes('0 pieces available')) {
+      return 'Out of Stock';
+    } else if (/(\d+)\s+pieces available/.test(text)) {
+      return 'In Stock';
+    } else {
+      return 'Unavailable';
+    }
+  } catch (err) {
+    console.error(`Error fetching ${url}:`, err.message);
+    return 'Error';
+  }
 }
 
-const SCOPES = ["https://www.googleapis.com/auth/spreadsheets"];
+async function run() {
+  console.log('Fetching data from Google Sheet...');
+  const rows = await getSheetData(SHEET_ID, RANGE);
 
-(async () => {
-  const privateKey = process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n");
-  const auth = new GoogleAuth({
-    credentials: {
-      client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      private_key: privateKey,
-    },
-    scopes: SCOPES,
-  });
-
-  const authClient = await auth.getClient();
-  const sheetId = process.env.GOOGLE_SHEET_ID;
-  const sheetName = process.env.SHEET_NAME;
-  const urls = await getSheetData(sheetId, sheetName, authClient);
-
-  const browser = await puppeteer.launch({ headless: "new" });
-  const page = await browser.newPage();
-  const results = [];
-
-  for (const url of urls) {
-    try {
-      await page.goto(url, { timeout: 60000, waitUntil: "domcontentloaded" });
-
-      const status = await page.evaluate(() => {
-        const qtyText = Array.from(document.querySelectorAll("div"))
-          .find(div => div.textContent && div.textContent.includes("pieces available"));
-        if (!qtyText) return "Deleted";
-        const match = qtyText.textContent.match(/(\d+)\s+pieces available/i);
-        if (!match || parseInt(match[1]) === 0) return "Out of Stock";
-        return "In Stock";
-      });
-
-      results.push(status);
-    } catch (err) {
-      results.push("Error");
-    }
+  if (!rows || rows.length === 0) {
+    console.log('No links found in the sheet.');
+    return;
   }
 
-  await updateSheetData(sheetId, sheetName, results, authClient);
-  await browser.close();
-})();
+  const results = [];
+
+  for (let i = 0; i < rows.length; i++) {
+    const link = rows[i][0];
+
+    if (!link) {
+      results.push(['No Link']);
+      continue;
+    }
+
+    console.log(`Checking: ${link}`);
+    const status = await checkShopeeStock(link);
+    results.push([status]);
+  }
+
+  console.log('Updating sheet...');
+  await updateSheetData(SHEET_ID, 'Sheet1!B2:B', results);
+  console.log('Done!');
+}
+
+run();
