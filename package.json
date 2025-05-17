@@ -1,0 +1,13 @@
+{
+  "name": "shopee-stock-checker",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "googleapis": "^105.0.0",
+    "puppeteer": "^21.3.8",
+    "dotenv": "^16.3.1"
+  }
+}
