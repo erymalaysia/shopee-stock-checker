@@ -2,10 +2,10 @@
   "name": "shopee-stock-checker",
   "version": "1.0.0",
   "description": "Check Shopee product stock from Google Sheets",
-  "main": "index.js",
+  "main": "index.cjs",
   "type": "module",
  "scripts": {
-  "start": "node --openssl-legacy-provider index.cjs"
+  "start": "node index.cjs"
 },
   "dependencies": {
     "dotenv": "^16.5.0",
