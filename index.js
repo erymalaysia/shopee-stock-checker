@@ -2,6 +2,11 @@ require("dotenv").config();
 const puppeteer = require("puppeteer");
 const { GoogleAuth } = require("google-auth-library");
 const { getSheetData, updateSheetData } = require("./google");
+const fs = require('fs');
+
+if (process.env.GOOGLE_SERVICE_JSON) {
+  fs.writeFileSync('service-account.json', process.env.GOOGLE_SERVICE_JSON);
+}
 
 const SCOPES = ["https://www.googleapis.com/auth/spreadsheets"];
 
