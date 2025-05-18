@@ -2,8 +2,8 @@ require("dotenv").config();
 const { GoogleSpreadsheet } = require("google-spreadsheet");
 const puppeteer = require("puppeteer");
 
-const SHEET_ID = process.env.GOOGLE_SHEET_ID;
-const SERVICE_EMAIL = process.env.GOOGLE_SERVICE_EMAIL;
+const SHEET_ID = process.env.SHEET_ID;
+const SERVICE_EMAIL = process.env.GOOGLE_CLIENT_EMAIL;
 const PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n");
 
 async function checkStockStatus(url) {
